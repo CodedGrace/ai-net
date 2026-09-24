@@ -42,6 +42,13 @@ import { metricsRouter } from "./routes/metrics";
 import { createStatsRouter } from "./routes/stats";
 import { createReconciliationRouter, type ReconciliationRouterOptions } from "./routes/reconciliation";
 import { rateLimitMiddleware, registerRateLimitMiddleware, publicLimiter, authedLimiter, adminLimiter } from "./middleware/rateLimit";
+import {
+  globalRateLimit as globalRateLimitMiddleware,
+  publicRateLimit as expressPublicRateLimit,
+  authedRateLimit as expressAuthedRateLimit,
+  veniceRateLimit as expressVeniceRateLimit,
+  adminRateLimit as expressAdminRateLimit,
+} from "./middleware/expressRateLimit";
 import { authMiddleware } from "./middleware/auth";
 import { createCorsMiddleware } from "./middleware/cors";
 import { compressionMiddleware } from "./middleware/compression";
@@ -200,10 +207,12 @@ export function createApp(opts: AppOptions = {}): {
 
   // ── Task routes ────────────────────────────────────────────────────────────
   // Authenticated task creation uses the tighter authed limiter.
+  // Venice AI proxy limiter (10/min) is applied in addition to the authed
+  // limiter because every task submission triggers a Venice AI inference call.
   const v1TasksRouter = createV1TasksRouter(dispatch, releasePayment, jobQueue);
   const v2TasksRouter = createV2TasksRouter(dispatch, releasePayment, jobQueue);
 
-  app.use("/api/tasks", authedLimiter.middleware, (req, res, next) => {
+  app.use("/api/tasks", authedLimiter.middleware, expressVeniceRateLimit, (req, res, next) => {
     const apiVersion = res.locals.apiVersion || "1.0";
     if (apiVersion.startsWith("1.")) {
       return v1TasksRouter(req, res, next);
