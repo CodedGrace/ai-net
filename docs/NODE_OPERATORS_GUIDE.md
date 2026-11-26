@@ -415,6 +415,8 @@ Monitor the logs (`journalctl -u ainet-node -f` or `docker compose logs -f`) to 
 
 ## 9. Observability, Metrics & Health Monitoring
 
+> **Interpreting what you see:** Once monitoring is up, use the [Monitoring Guide](./MONITORING_GUIDE.md) for a full walkthrough of every Grafana panel, alert interpretation, KPI baselines, anomaly investigation flows, and a monthly metric review checklist.
+
 ### Prometheus Metrics
 
 The node exposes Prometheus-compatible metrics at `GET /metrics`:
